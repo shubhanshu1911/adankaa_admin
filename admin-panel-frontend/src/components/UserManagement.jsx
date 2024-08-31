@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
-    const [newUser, setNewUser] = useState({ email: '', password: '', role: '' });
+    const [newUser, setNewUser] = useState({ email: '', password: '', role: '', permissions: { romoBasic: false, romoAdvanced: false } });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [creating, setCreating] = useState(false);
@@ -34,7 +34,7 @@ const UserManagement = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setUsers([...users, newUser]);
-            setNewUser({ email: '', password: '', role: '' });
+            setNewUser({ email: '', password: '', role: '', permissions: { romoBasic: false, romoAdvanced: false } });
         } catch (err) {
             setError('Failed to create user');
             console.error(err);
@@ -51,6 +51,20 @@ const UserManagement = () => {
             setUsers(users.filter(user => user._id !== userId));
         } catch (err) {
             setError('Failed to delete user');
+            console.error(err);
+        }
+    };
+
+    const handlePermissionChange = async (userId, permissionType, value) => {
+        try {
+            const updatedUser = users.find(user => user._id === userId);
+            updatedUser.permissions[permissionType] = value;
+            await axios.put('http://localhost:5000/api/admin/manage-permissions', { userId, permissions: updatedUser.permissions }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setUsers(users.map(user => user._id === userId ? updatedUser : user));
+        } catch (err) {
+            setError('Failed to update permissions');
             console.error(err);
         }
     };
@@ -108,15 +122,31 @@ const UserManagement = () => {
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Romo Basic</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Romo Advanced</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {users.map(user => (
                         <tr key={user._id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.email}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                    type="checkbox"
+                                    checked={user.permissions.romoBasic}
+                                    onChange={(e) => handlePermissionChange(user._id, 'romoBasic', e.target.checked)}
+                                />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                    type="checkbox"
+                                    checked={user.permissions.romoAdvanced}
+                                    onChange={(e) => handlePermissionChange(user._id, 'romoAdvanced', e.target.checked)}
+                                />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                                 <button
                                     onClick={() => handleDelete(user._id)}
                                     className="text-red-600 hover:text-red-900"

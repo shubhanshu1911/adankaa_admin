@@ -6,7 +6,10 @@ const { createUser, managePermissions, getUsers } = require('../controllers/admi
 // Route to fetch all users
 router.get('/users', authMiddleware, adminMiddleware, getUsers);
 
+// Route to create a new user
 router.post('/create-user', authMiddleware, adminMiddleware, createUser);
-router.post('/manage-permissions', authMiddleware, adminMiddleware, managePermissions);
+
+// Route to manage permissions
+router.put('/manage-permissions', authMiddleware, adminMiddleware, managePermissions);
 
 module.exports = router;
