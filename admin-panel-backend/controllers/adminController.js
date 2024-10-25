@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendEmail } = require('../utils/sendEmail'); // Adjust the path as necessary
 
 // Controller to create a new user
 exports.createUser = async (req, res) => {
@@ -19,12 +20,21 @@ exports.createUser = async (req, res) => {
     user = new User({ email, password: hashedPassword, role, permissions });
     await user.save();
 
-    res.status(201).json({ message: 'User created successfully' });
+    // Send email to the user
+    try {
+      await sendEmail(email, password);
+      res.status(201).json({ message: 'User created successfully and email sent' });
+    } catch (emailErr) {
+      console.error('Email failed to send:', emailErr);
+      res.status(201).json({ message: 'User created successfully, but email failed to send' });
+    }
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
 
 // Controller to fetch all users
 exports.getUsers = async (req, res) => {
